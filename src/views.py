@@ -12,7 +12,6 @@ user_period_data = excel_data[
 
 def get_greeting(user_date_time: datetime) -> str:
     '''Возвращает приветствие в зависимости от времени суток'''
-
     if 0 <= user_date_time.hour < 6:
         greeting = 'Доброй ночи'
     elif 6 <= user_date_time.hour < 12:
