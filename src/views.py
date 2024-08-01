@@ -21,7 +21,6 @@ def get_greeting(user_date_time: datetime) -> str:
         greeting = 'Добрый день'
     else:
         greeting = 'Добрый вечер'
-
     return greeting
 
 
