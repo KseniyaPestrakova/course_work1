@@ -185,7 +185,7 @@ def get_stock(stock_dict: dict) -> List[dict]:
     return stock_prices
 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
     # print(get_greeting('03-12-2021 06:42:21'))
     # print(get_card_info(get_data_from_date('03-12-2021 06:42:21')))
     # print(get_stock(get_currency_and_stock()))
