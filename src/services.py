@@ -3,6 +3,7 @@ import logging
 from datetime import datetime, timedelta
 import calendar
 import pandas as pd
+from utils import get_data_frame
 
 logging.basicConfig(
     level=logging.INFO,
@@ -54,5 +55,4 @@ def get_best_cashback(data: pd.DataFrame, year: int, month: int) -> json:
 
 
 if __name__ == '__main__':
-    excel_data = pd.read_excel('../data/operations.xlsx')
-    print(get_best_cashback(excel_data, 2021, 12))
+    print(get_best_cashback(get_data_frame(), 2021, 12))

@@ -17,17 +17,24 @@ logging.basicConfig(
 utils_logger = logging.getLogger("utils")
 
 
+def get_data_frame(file_name: str) -> pd.DataFrame:
+    excel_name = pd.read_excel(file_name)
+    return excel_name
+
+# print(get_data_frame('../data/operation.xlsx'))
+
+
 def get_data_from_date(user_date_time_str: str) -> pd.DataFrame:
     '''Возвращает отфильтрованный список транзакций в зависимости от полученной даты'''
+
     utils_logger.info('Старт работы функции get_data_from_date')
-    file_name = '../data/operations.xlsx'
     user_period_data = pd.DataFrame({})
     try:
         utils_logger.info('Переводим дату в текстовом формате в формат дат')
         user_date_time = datetime.strptime(user_date_time_str, "%d-%m-%Y %H:%M:%S")
 
         utils_logger.info('Получаем операции из файла для дальнейшей обработки')
-        excel_data = pd.read_excel(file_name)
+        excel_data = get_data_frame()
         utils_logger.info('Фильтруем операции от первого дня месяца введенной даты до введенной даты')
         excel_data['Дата операции'] = pd.to_datetime(excel_data['Дата операции'], dayfirst=True)
         user_period_data = excel_data[
@@ -35,7 +42,7 @@ def get_data_from_date(user_date_time_str: str) -> pd.DataFrame:
         utils_logger.info('Возвращаем полученные операции')
         return user_period_data
     except Exception:
-        utils_logger.error(f'Что-то пошло не так с {file_name}')
+        utils_logger.error('Что-то пошло не так.')
         return user_period_data
 
 
@@ -183,11 +190,3 @@ def get_stock(stock_dict: dict) -> List[dict]:
             return response.reason
     utils_logger.info('Выводим полученный список')
     return stock_prices
-
-
-# if __name__ == '__main__':
-    # print(get_greeting('03-12-2021 06:42:21'))
-    # print(get_card_info(get_data_from_date('03-12-2021 06:42:21')))
-    # print(get_stock(get_currency_and_stock()))
-    # print(get_currency_and_stock())
-

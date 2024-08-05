@@ -1,7 +1,9 @@
+import json
 import logging
 from datetime import datetime, timedelta
-from typing import Optional
-
+from typing import Optional, Any
+from utils import get_data_frame
+from functools import wraps
 import  pandas as pd
 
 logging.basicConfig(
@@ -14,6 +16,26 @@ logging.basicConfig(
 reports_logger = logging.getLogger("reports")
 
 
+def log(filename: Any = None) -> json:
+    """Записывает в файл результат, который возвращает функция spending_by_category"""
+
+    def decorator(func: Any) -> Any:
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            result = func(*args, **kwargs)
+            result_json = result.to_json(orient='records')
+            if filename:
+                with open(filename, "w", encoding="utf-8") as f:
+                    json.dump(result_json, f, indent=4, ensure_ascii=False)
+                    return result
+            else:
+                with open('reports.json', 'w', encoding="utf-8") as f:
+                    json.dump(result_json, f, indent=4, ensure_ascii=False)
+                    return result_json
+        return wrapper
+    return decorator
+
+
+@log()
 def spending_by_category(transactions: pd.DataFrame,
                          category: str,
                          date: Optional[str] = None) -> pd.DataFrame:
@@ -32,7 +54,7 @@ def spending_by_category(transactions: pd.DataFrame,
 
         transactions['Дата операции'] = pd.to_datetime(transactions['Дата операции'], dayfirst=True)
         reports_logger.info('Получаем данные для анализа за три предыдущих месяца от указанной даты.')
-        user_period_data = transactions[(transactions['Дата операции'].between((user_date - timedelta(days=91)), user_date))]
+        user_period_data = transactions[(transactions['Дата операции'].between((user_date - timedelta(days=90)), user_date))]
         reports_logger.info('Фильтруем траты по указанной категории')
         category_spending = user_period_data.loc[(user_period_data["Сумма платежа"] < 0) & (user_period_data["Категория"] == category)]
         reports_logger.info('Возвращаем полученные траты.')
@@ -43,5 +65,4 @@ def spending_by_category(transactions: pd.DataFrame,
 
 
 if __name__ =='__main__':
-    excel_data = pd.read_excel('../data/operations.xlsx')
-    print(spending_by_category(excel_data, 'Переводы', '03-12-2021'))
+    print(spending_by_category(get_data_frame('../data/operations.xlsx'), 'Переводы', '03-12-2021'))
