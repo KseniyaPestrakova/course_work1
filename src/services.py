@@ -5,14 +5,13 @@ import calendar
 import pandas as pd
 from utils import get_data_frame
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(funcName)s - %(levelname)s - %(message)s",
-    filename="../logs/services.log",
-    filemode="w",
-)
 
 services_logger = logging.getLogger("services")
+file_handler = logging.FileHandler("../logs/services.log")
+file_formatter = logging.Formatter('%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(file_formatter)
+services_logger.addHandler(file_handler)
+services_logger.setLevel(logging.INFO)
 
 
 def get_best_cashback(data: pd.DataFrame, year: int, month: int) -> json:
@@ -27,7 +26,7 @@ def get_best_cashback(data: pd.DataFrame, year: int, month: int) -> json:
         end_date = datetime(year, month, last_day_month[-1]) + timedelta(days=1)
         services_logger.info('Получаем данные для анализа за выбранный месяц.')
         user_period_data = data[
-             (data['Дата операции'].between(start_date, end_date))]
+            (data['Дата операции'].between(start_date, end_date))]
         services_logger.info('Группируем категории расходов по сумме платежа и переводим данные в словарь.')
         possible_cashback = (
             user_period_data.loc[user_period_data["Сумма платежа"] < 0]
@@ -42,7 +41,7 @@ def get_best_cashback(data: pd.DataFrame, year: int, month: int) -> json:
         services_logger.info('Добавляем три первые пары ключ-значение из полученного списка в итоговый словарь.')
         for category, amount in possible_cashback_sort:
             if len(result_cashback) < 3:
-                result_cashback[category] = round(amount/100, 2)
+                result_cashback[category] = round(amount / 100, 2)
             else:
                 break
         services_logger.info('Переводим полученный итоговый словарь в JSON')
@@ -50,9 +49,9 @@ def get_best_cashback(data: pd.DataFrame, year: int, month: int) -> json:
         services_logger.info('Возвращаем полученный JSON. Конец работы функции.')
         return best_cashback_json
     except Exception:
-        services_logger.error(f'Возникла непредвиденная ошибка {Exception}')
+        services_logger.error(f'Возникла непредвиденная ошибка {Exception}', exc_info=True)
         return best_cashback_json
 
 
 if __name__ == '__main__':
-    print(get_best_cashback(get_data_frame(), 2021, 12))
+    print(get_best_cashback(get_data_frame('../data/operations.xlsx'), 2020, 12))

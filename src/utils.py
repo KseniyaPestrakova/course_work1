@@ -7,21 +7,18 @@ import requests
 from dotenv import load_dotenv
 import os
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(funcName)s - %(levelname)s - %(message)s",
-    filename="../logs/utils.log",
-    filemode="w",
-)
 
 utils_logger = logging.getLogger("utils")
+file_handler = logging.FileHandler("../logs/utils.log", encoding='utf-8')
+file_formatter = logging.Formatter('%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(file_formatter)
+utils_logger.addHandler(file_handler)
+utils_logger.setLevel(logging.INFO)
 
 
 def get_data_frame(file_name: str) -> pd.DataFrame:
     excel_name = pd.read_excel(file_name)
     return excel_name
-
-# print(get_data_frame('../data/operation.xlsx'))
 
 
 def get_data_from_date(user_date_time_str: str) -> pd.DataFrame:
@@ -190,3 +187,6 @@ def get_stock(stock_dict: dict) -> List[dict]:
             return response.reason
     utils_logger.info('Выводим полученный список')
     return stock_prices
+
+if __name__ == '__main__':
+    print(get_top_transactions(get_data_frame('../data/operations.xlsx')))

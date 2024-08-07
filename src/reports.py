@@ -4,16 +4,15 @@ from datetime import datetime, timedelta
 from typing import Optional, Any
 from utils import get_data_frame
 from functools import wraps
-import  pandas as pd
+import pandas as pd
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(funcName)s - %(levelname)s - %(message)s",
-    filename="../logs/reports.log",
-    filemode="w",
-)
 
 reports_logger = logging.getLogger("reports")
+file_handler = logging.FileHandler("../logs/reports.log")
+file_formatter = logging.Formatter('%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(file_formatter)
+reports_logger.addHandler(file_handler)
+reports_logger.setLevel(logging.INFO)
 
 
 def log(filename: Any = None) -> json:
@@ -22,15 +21,15 @@ def log(filename: Any = None) -> json:
     def decorator(func: Any) -> Any:
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             result = func(*args, **kwargs)
-            result_json = result.to_json(orient='records')
+
             if filename:
                 with open(filename, "w", encoding="utf-8") as f:
-                    json.dump(result_json, f, indent=4, ensure_ascii=False)
+                    json.dump(result, f, indent=4, ensure_ascii=False)
                     return result
             else:
                 with open('reports.json', 'w', encoding="utf-8") as f:
-                    json.dump(result_json, f, indent=4, ensure_ascii=False)
-                    return result_json
+                    json.dump(result, f, indent=4, ensure_ascii=False)
+                    return result
         return wrapper
     return decorator
 
@@ -38,11 +37,12 @@ def log(filename: Any = None) -> json:
 @log()
 def spending_by_category(transactions: pd.DataFrame,
                          category: str,
-                         date: Optional[str] = None) -> pd.DataFrame:
+                         date: Optional[str] = None) -> json:
     '''Возвращает траты по заданной категории за последние три месяца (от переданной даты)'''
 
     reports_logger.info('Старт работы функции spending_by_category.')
-    category_spending = pd.DataFrame({})
+    category_spending = {}
+    json_data = json.dumps(category_spending)
     try:
         reports_logger.info('Проверяем, указана ли дата')
         if date is None:
@@ -56,13 +56,20 @@ def spending_by_category(transactions: pd.DataFrame,
         reports_logger.info('Получаем данные для анализа за три предыдущих месяца от указанной даты.')
         user_period_data = transactions[(transactions['Дата операции'].between((user_date - timedelta(days=90)), user_date))]
         reports_logger.info('Фильтруем траты по указанной категории')
-        category_spending = user_period_data.loc[(user_period_data["Сумма платежа"] < 0) & (user_period_data["Категория"] == category)]
-        reports_logger.info('Возвращаем полученные траты.')
-        return category_spending
+        category_spending_df = user_period_data.loc[(user_period_data["Сумма платежа"] < 0) & (user_period_data["Категория"] == category)]
+        reports_logger.info('Возвращаем дату в текстовое значение.')
+        pd.options.mode.chained_assignment = None
+        category_spending_df['Дата операции'] = category_spending_df['Дата операции'].dt.strftime("%d-%m-%Y %H:%M:%S")
+        reports_logger.info('Переводим DataFrame в словарь.')
+        category_spending = category_spending_df.to_dict('index')
+        reports_logger.info('Возвращаем полученные траты в JSON  формате.')
+        json_data = json.dumps(category_spending, ensure_ascii=False)
+        return json_data
     except Exception:
-        reports_logger.error(f'Возникла непредвиденная ошибка {Exception}')
-        return category_spending
+        reports_logger.error(f'Возникла непредвиденная ошибка {Exception}', exc_info=True)
+        return json_data
 
 
 if __name__ =='__main__':
+
     print(spending_by_category(get_data_frame('../data/operations.xlsx'), 'Переводы', '03-12-2021'))
