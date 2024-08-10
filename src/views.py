@@ -14,7 +14,3 @@ def get_main_page(user_date_time: str) -> json:
                  "stock_prices": get_stock(get_currency_and_stock())}
     main_page_json = json.dumps(main_page, indent=4, ensure_ascii=False)
     return main_page_json
-
-
-if __name__ == '__main__':
-    print(get_main_page('03-12-2021 06:42:21'))

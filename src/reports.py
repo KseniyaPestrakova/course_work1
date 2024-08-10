@@ -2,8 +2,6 @@ import json
 import logging
 from datetime import datetime, timedelta
 from typing import Optional, Any
-from utils import get_data_frame
-from functools import wraps
 import pandas as pd
 
 
@@ -65,11 +63,6 @@ def spending_by_category(transactions: pd.DataFrame,
         reports_logger.info('Возвращаем полученные траты в JSON  формате.')
         json_data = json.dumps(category_spending, ensure_ascii=False)
         return json_data
-    except Exception:
-        reports_logger.error(f'Возникла непредвиденная ошибка {Exception}', exc_info=True)
+    except Exception as e:
+        reports_logger.error(f'Возникла непредвиденная ошибка {e}', exc_info=True)
         return json_data
-
-
-if __name__ =='__main__':
-
-    print(spending_by_category(get_data_frame('../data/operations.xlsx'), 'Переводы', '03-12-2021'))

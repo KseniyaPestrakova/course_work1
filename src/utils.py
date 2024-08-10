@@ -17,8 +17,11 @@ utils_logger.setLevel(logging.INFO)
 
 
 def get_data_frame(file_name: str) -> pd.DataFrame:
+    '''Возвращает DataFrame  из указанного excel-файла'''
     excel_name = pd.read_excel(file_name)
     return excel_name
+
+file_name_example = '../data/operations.xlsx'
 
 
 def get_data_from_date(user_date_time_str: str) -> pd.DataFrame:
@@ -31,16 +34,19 @@ def get_data_from_date(user_date_time_str: str) -> pd.DataFrame:
         user_date_time = datetime.strptime(user_date_time_str, "%d-%m-%Y %H:%M:%S")
 
         utils_logger.info('Получаем операции из файла для дальнейшей обработки')
-        excel_data = get_data_frame()
+        excel_data = get_data_frame(file_name_example)
         utils_logger.info('Фильтруем операции от первого дня месяца введенной даты до введенной даты')
         excel_data['Дата операции'] = pd.to_datetime(excel_data['Дата операции'], dayfirst=True)
         user_period_data = excel_data[
             (excel_data['Дата операции'].between(user_date_time.replace(day=1), (user_date_time + timedelta(days=1))))]
         utils_logger.info('Возвращаем полученные операции')
         return user_period_data
-    except Exception:
-        utils_logger.error('Что-то пошло не так.')
+    except Exception as e:
+        utils_logger.error(f'Что-то пошло не так. {e}', exc_info=True)
         return user_period_data
+
+if __name__ == '__main__':
+    print(get_data_from_date('15-12-2021 16:42:04'))
 
 
 def get_currency_and_stock() -> json:
@@ -55,8 +61,8 @@ def get_currency_and_stock() -> json:
             currency_and_stock = json.load(f)
         utils_logger.info('JSON открыт. Возвращаем запрашиваемые данные')
         return currency_and_stock
-    except Exception:
-        utils_logger.error(f'Что-то пошло не так с {file_name}')
+    except Exception as e:
+        utils_logger.error(f'Что-то пошло не так с {file_name}. {e}')
         return currency_and_stock
 
 
@@ -78,8 +84,8 @@ def get_greeting(user_date_time_str: str) -> str:
             greeting = 'Добрый вечер'
         utils_logger.info('Возвращаем соответствующее приветствие')
         return greeting
-    except Exception:
-        utils_logger.error(f'Что-то не так с указанным временем {user_date_time_str}')
+    except Exception as e:
+        utils_logger.error(f'Что-то не так с указанным временем {user_date_time_str}. {e}')
         return greeting
 
 
@@ -105,8 +111,8 @@ def get_card_info(users_data: pd.DataFrame) -> List[dict]:
                  'cashback': round(spend / 100, 2)})
         utils_logger.info('Возвращаем итоговый список')
         return cards_spend_cashback
-    except Exception:
-        utils_logger.error('Возникла непредвиденная ошибка')
+    except Exception as e:
+        utils_logger.error(f'Возникла непредвиденная ошибка {e}')
         return cards_spend_cashback
 
 
@@ -128,8 +134,8 @@ def get_top_transactions(users_data: pd.DataFrame) -> List[dict]:
                                     'description': transaction['Описание']})
         utils_logger.info('Возвращаем полученный список')
         return top_transactions
-    except Exception:
-        utils_logger.error('Возникла непредвиденная ошибка')
+    except Exception as e:
+        utils_logger.error(f'Возникла непредвиденная ошибка {e}')
         return top_transactions
 
 
@@ -162,7 +168,6 @@ def get_currency_rates(currency_dict: dict) -> List[dict]:
     return result_list
 
 
-
 def get_stock(stock_dict: dict) -> List[dict]:
     '''Возвращает цены акций заданных компаний'''
 
@@ -187,6 +192,3 @@ def get_stock(stock_dict: dict) -> List[dict]:
             return response.reason
     utils_logger.info('Выводим полученный список')
     return stock_prices
-
-if __name__ == '__main__':
-    print(get_top_transactions(get_data_frame('../data/operations.xlsx')))

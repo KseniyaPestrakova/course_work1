@@ -3,7 +3,7 @@ import logging
 from datetime import datetime, timedelta
 import calendar
 import pandas as pd
-from utils import get_data_frame
+
 
 
 services_logger = logging.getLogger("services")
@@ -48,10 +48,6 @@ def get_best_cashback(data: pd.DataFrame, year: int, month: int) -> json:
         best_cashback_json = json.dumps(result_cashback, indent=4, ensure_ascii=False)
         services_logger.info('Возвращаем полученный JSON. Конец работы функции.')
         return best_cashback_json
-    except Exception:
-        services_logger.error(f'Возникла непредвиденная ошибка {Exception}', exc_info=True)
+    except Exception as e:
+        services_logger.error(f'Возникла непредвиденная ошибка {e}', exc_info=True)
         return best_cashback_json
-
-
-if __name__ == '__main__':
-    print(get_best_cashback(get_data_frame('../data/operations.xlsx'), 2020, 12))
