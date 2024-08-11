@@ -1,138 +1,156 @@
 import json
 import logging
+import os
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Any
+
 import pandas as pd
 import requests
 from dotenv import load_dotenv
-import os
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(funcName)s - %(levelname)s - %(message)s",
-    filename="../logs/utils.log",
-    filemode="w",
-)
 
 utils_logger = logging.getLogger("utils")
+file_handler = logging.FileHandler("../logs/utils.log", encoding="utf-8")
+file_formatter = logging.Formatter("%(asctime)s - %(funcName)s - %(levelname)s - %(message)s")
+file_handler.setFormatter(file_formatter)
+utils_logger.addHandler(file_handler)
+utils_logger.setLevel(logging.INFO)
+
+
+def get_data_frame(file_name: str) -> pd.DataFrame:
+    """Возвращает DataFrame  из указанного excel-файла"""
+    excel_name = pd.read_excel(file_name)
+    return excel_name
+
+
+file_name_example = "../data/operations.xlsx"
 
 
 def get_data_from_date(user_date_time_str: str) -> pd.DataFrame:
-    '''Возвращает отфильтрованный список транзакций в зависимости от полученной даты'''
-    utils_logger.info('Старт работы функции get_data_from_date')
-    file_name = '../data/operations.xlsx'
+    """Возвращает отфильтрованный список транзакций в зависимости от полученной даты"""
+
+    utils_logger.info("Старт работы функции get_data_from_date")
     user_period_data = pd.DataFrame({})
     try:
-        utils_logger.info('Переводим дату в текстовом формате в формат дат')
+        utils_logger.info("Переводим дату в текстовом формате в формат дат")
         user_date_time = datetime.strptime(user_date_time_str, "%d-%m-%Y %H:%M:%S")
 
-        utils_logger.info('Получаем операции из файла для дальнейшей обработки')
-        excel_data = pd.read_excel(file_name)
-        utils_logger.info('Фильтруем операции от первого дня месяца введенной даты до введенной даты')
-        excel_data['Дата операции'] = pd.to_datetime(excel_data['Дата операции'], dayfirst=True)
+        utils_logger.info("Получаем операции из файла для дальнейшей обработки")
+        excel_data = get_data_frame(file_name_example)
+        utils_logger.info("Фильтруем операции от первого дня месяца введенной даты до введенной даты")
+        excel_data["Дата операции"] = pd.to_datetime(excel_data["Дата операции"], dayfirst=True)
         user_period_data = excel_data[
-            (excel_data['Дата операции'].between(user_date_time.replace(day=1), (user_date_time + timedelta(days=1))))]
-        utils_logger.info('Возвращаем полученные операции')
+            (excel_data["Дата операции"].between(user_date_time.replace(day=1), (user_date_time + timedelta(days=1))))
+        ]
+        utils_logger.info("Возвращаем полученные операции")
         return user_period_data
-    except Exception:
-        utils_logger.error(f'Что-то пошло не так с {file_name}')
+    except Exception as e:
+        utils_logger.error(f"Что-то пошло не так. {e}", exc_info=True)
         return user_period_data
 
 
-def get_currency_and_stock() -> json:
-    '''Возвращает список валют и акций в формате JSON'''
+if __name__ == "__main__":
+    print(get_data_from_date("15-12-2021 16:42:04"))
 
-    utils_logger.info('Старт работы функции get_currency_and_stock')
-    currency_and_stock = json.loads('{}')
-    file_name = '../user_settings.json'
+
+def get_currency_and_stock() -> Any:
+    """Возвращает список валют и акций в формате JSON"""
+
+    utils_logger.info("Старт работы функции get_currency_and_stock")
+    currency_and_stock = json.loads("{}")
+    file_name = "../user_settings.json"
     try:
-        utils_logger.info('Попытка открыть JSON')
+        utils_logger.info("Попытка открыть JSON")
         with open(file_name) as f:
             currency_and_stock = json.load(f)
-        utils_logger.info('JSON открыт. Возвращаем запрашиваемые данные')
+        utils_logger.info("JSON открыт. Возвращаем запрашиваемые данные")
         return currency_and_stock
-    except Exception:
-        utils_logger.error(f'Что-то пошло не так с {file_name}')
+    except Exception as e:
+        utils_logger.error(f"Что-то пошло не так с {file_name}. {e}")
         return currency_and_stock
 
 
 def get_greeting(user_date_time_str: str) -> str:
-    '''Возвращает приветствие в зависимости от времени суток'''
+    """Возвращает приветствие в зависимости от времени суток"""
 
-    utils_logger.info('Старт работы функции get_greeting')
-    greeting = 'Доброго времени суток'
+    utils_logger.info("Старт работы функции get_greeting")
+    greeting = "Доброго времени суток"
     try:
         user_date_time = datetime.strptime(user_date_time_str, "%d-%m-%Y %H:%M:%S")
-        utils_logger.info('Проверяем, к какому времени суток относится введенное время')
+        utils_logger.info("Проверяем, к какому времени суток относится введенное время")
         if 0 <= user_date_time.hour < 6:
-            greeting = 'Доброй ночи'
+            greeting = "Доброй ночи"
         elif 6 <= user_date_time.hour < 12:
-            greeting = 'Доброе утро'
+            greeting = "Доброе утро"
         elif 12 <= user_date_time.hour < 18:
-            greeting = 'Добрый день'
+            greeting = "Добрый день"
         else:
-            greeting = 'Добрый вечер'
-        utils_logger.info('Возвращаем соответствующее приветствие')
+            greeting = "Добрый вечер"
+        utils_logger.info("Возвращаем соответствующее приветствие")
         return greeting
-    except Exception:
-        utils_logger.error(f'Что-то не так с указанным временем {user_date_time_str}')
+    except Exception as e:
+        utils_logger.error(f"Что-то не так с указанным временем {user_date_time_str}. {e}")
         return greeting
 
 
 def get_card_info(users_data: pd.DataFrame) -> List[dict]:
-    '''Возвращает последние 4 цифры карты, общую сумму расходов и кешбэк (1 рубль на каждые 100 рублей)'''
+    """Возвращает последние 4 цифры карты, общую сумму расходов и кешбэк (1 рубль на каждые 100 рублей)"""
 
-    utils_logger.info('Старт работы функции get_card_info')
+    utils_logger.info("Старт работы функции get_card_info")
     cards_spend_cashback = []
     try:
-        utils_logger.info('Преобразуем нужные данные в словарь')
+        utils_logger.info("Преобразуем нужные данные в словарь")
         cards_spend = (
             users_data.loc[users_data["Сумма платежа"] < 0]
             .groupby(by="Номер карты")
             .agg("Сумма платежа")
             .sum()
             .abs()
-            .to_dict())
-        utils_logger.info('Формируем список нужных данных в заданном формате')
+            .to_dict()
+        )
+        utils_logger.info("Формируем список нужных данных в заданном формате")
         for card, spend in cards_spend.items():
             cards_spend_cashback.append(
-                {'last_digits': card[-4::],
-                 'total_spent': round(spend, 2),
-                 'cashback': round(spend / 100, 2)})
-        utils_logger.info('Возвращаем итоговый список')
+                {"last_digits": card[-4::], "total_spent": round(spend, 2), "cashback": round(spend / 100, 2)}
+            )
+        utils_logger.info("Возвращаем итоговый список")
         return cards_spend_cashback
-    except Exception:
-        utils_logger.error('Возникла непредвиденная ошибка')
+    except Exception as e:
+        utils_logger.error(f"Возникла непредвиденная ошибка {e}")
         return cards_spend_cashback
 
 
 def get_top_transactions(users_data: pd.DataFrame) -> List[dict]:
-    '''Возвращает топ-5 операций по сумме платежа'''
+    """Возвращает топ-5 операций по сумме платежа"""
 
-    utils_logger.info('Старт работы функции get_top_transactions')
+    utils_logger.info("Старт работы функции get_top_transactions")
     top_transactions = []
     try:
-        utils_logger.info('Фильтруем пять операций, наибольших по модулю суммы операции')
-        user_data_sort = users_data.sort_values('Сумма операции', axis=0, ascending=False, key=lambda x: abs(x)).iloc[
-                         0:5]
-        users_data_sorted_dict = user_data_sort.to_dict(orient='records')
-        utils_logger.info('Добавляем полученные операции в список заданного формата')
+        utils_logger.info("Фильтруем пять операций, наибольших по модулю суммы операции")
+        user_data_sort = users_data.sort_values("Сумма операции", axis=0, ascending=False, key=lambda x: abs(x)).iloc[
+            0:5
+        ]
+        users_data_sorted_dict = user_data_sort.to_dict(orient="records")
+        utils_logger.info("Добавляем полученные операции в список заданного формата")
         for transaction in users_data_sorted_dict:
-            top_transactions.append({'date': str(transaction['Дата платежа']),
-                                    'amount': abs(transaction['Сумма операции']),
-                                    'category': transaction['Категория'],
-                                    'description': transaction['Описание']})
-        utils_logger.info('Возвращаем полученный список')
+            top_transactions.append(
+                {
+                    "date": str(transaction["Дата платежа"]),
+                    "amount": abs(transaction["Сумма операции"]),
+                    "category": transaction["Категория"],
+                    "description": transaction["Описание"],
+                }
+            )
+        utils_logger.info("Возвращаем полученный список")
         return top_transactions
-    except Exception:
-        utils_logger.error('Возникла непредвиденная ошибка')
+    except Exception as e:
+        utils_logger.error(f"Возникла непредвиденная ошибка {e}")
         return top_transactions
 
 
-def get_currency_rates(currency_dict: dict) -> List[dict]:
+def get_currency_rates(currency_dict: dict) -> List[dict] | int | str:
     """Возвращает курс заданных валют"""
 
-    utils_logger.info('Старт работы функции get_currency_rates')
+    utils_logger.info("Старт работы функции get_currency_rates")
     result_list = []
 
     currency_list = currency_dict["user_currencies"]
@@ -142,52 +160,41 @@ def get_currency_rates(currency_dict: dict) -> List[dict]:
         API_KEY = os.getenv("API_KEY")
         payload: dict = {}
         headers = {"apikey": API_KEY}
-        utils_logger.info('Посылаем запрос с указанными параметрами')
+        utils_logger.info("Посылаем запрос с указанными параметрами")
         response = requests.request("GET", url, headers=headers, data=payload)
-        utils_logger.info('Переводим полученный ответ в JSON формат')
+        utils_logger.info("Переводим полученный ответ в JSON формат")
         data = response.json()
-        utils_logger.info('Проверяем статус ответа')
+        utils_logger.info("Проверяем статус ответа")
         if response.status_code == 200:
-            utils_logger.info('Добавляем интересующие нас данные в список в заданном формате')
-            result_list.append({"currency": data['query']['from'],
-                                    "rate": round(data["result"], 2)})
+            utils_logger.info("Добавляем интересующие нас данные в список в заданном формате")
+            result_list.append({"currency": data["query"]["from"], "rate": round(data["result"], 2)})
         else:
             utils_logger.info(f"Запрос не был успешным. Возможная причина: {response.reason}")
             return response.status_code
-    utils_logger.info('Выводим полученный список')
+    utils_logger.info("Выводим полученный список")
     return result_list
 
 
+def get_stock(stock_dict: dict) -> List[dict] | str:
+    """Возвращает цены акций заданных компаний"""
 
-def get_stock(stock_dict: dict) -> List[dict]:
-    '''Возвращает цены акций заданных компаний'''
-
-    utils_logger.info('Старт работы функции get_stock')
-    stock_list = stock_dict['user_stocks']
+    utils_logger.info("Старт работы функции get_stock")
+    stock_list = stock_dict["user_stocks"]
     stock_prices = []
-    utils_logger.info('Проходим по каждой акции в списке stock_dict')
+    utils_logger.info("Проходим по каждой акции в списке stock_dict")
     for stock in stock_list:
         load_dotenv()
         API_KEY_STOCK = os.getenv("API_KEY_STOCK")
-        url = f'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={stock}&apikey={API_KEY_STOCK}'
-        utils_logger.info('Посылаем запрос с указанными параметрами')
+        url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={stock}&apikey={API_KEY_STOCK}"
+        utils_logger.info("Посылаем запрос с указанными параметрами")
         response = requests.request("GET", url)
         data = response.json()
-        utils_logger.info('Проверяем статус полученного ответа')
+        utils_logger.info("Проверяем статус полученного ответа")
         if response.status_code == 200:
-            utils_logger.info('Статус ответа 200. Добавляем интересующие нас данные в список в заданном формате')
-            stock_prices.append({'stock': stock,
-                                 'price': round(float(data['Global Quote']['05. price']), 2)})
+            utils_logger.info("Статус ответа 200. Добавляем интересующие нас данные в список в заданном формате")
+            stock_prices.append({"stock": stock, "price": round(float(data["Global Quote"]["05. price"]), 2)})
         else:
             utils_logger.info(f"Запрос не был успешным. Возможная причина: {response.reason}")
             return response.reason
-    utils_logger.info('Выводим полученный список')
+    utils_logger.info("Выводим полученный список")
     return stock_prices
-
-
-# if __name__ == '__main__':
-    # print(get_greeting('03-12-2021 06:42:21'))
-    # print(get_card_info(get_data_from_date('03-12-2021 06:42:21')))
-    # print(get_stock(get_currency_and_stock()))
-    # print(get_currency_and_stock())
-
